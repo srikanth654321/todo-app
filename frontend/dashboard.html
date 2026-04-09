@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dashboard</title>
+
+<style>
+body {
+  font-family: 'Segoe UI';
+  background: linear-gradient(135deg,#1e3c72,#2a5298);
+  color: white;
+  margin: 0;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+}
+
+.logout-btn {
+  background: #ff4d4d;
+}
+
+/* CENTER CONTENT */
+.container {
+  text-align: center;
+}
+
+input {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 5px;
+  border: none;
+}
+
+button {
+  padding: 10px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #00c9a7;
+  color: white;
+}
+
+/* TASK CARD */
+.task {
+  background: white;
+  color: black;
+  width: 350px;
+  margin: 15px auto;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: left;
+  box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+}
+
+/* STATUS */
+.pending {
+  background: red;
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.completed {
+  background: green;
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.actions {
+  margin-top: 10px;
+}
+
+.actions button {
+  margin-right: 10px;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <h2>ADD YOUR WORKS</h2>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+
+  <input id="task" placeholder="Enter Task">
+  <input id="deadline" type="datetime-local">
+  <button onclick="addTask()">Add Task</button>
+
+  <h3 id="count"></h3>
+
+  <div id="tasks"></div>
+
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+// ✅ LOGOUT FUNCTION
+function logout() {
+  localStorage.clear();
+  window.location = "login.html";
+}
+
+// LOAD TASKS
+async function loadTasks() {
+  const res = await fetch("http://localhost:5000/tasks", {
+    headers: { Authorization: token }
+  });
+
+  const data = await res.json();
+
+  tasks.innerHTML = "";
+  count.innerText = "Total Tasks: " + data.length;
+
+  data.forEach(t => {
+
+    const div = document.createElement("div");
+    div.className = "task";
+
+    const now = new Date();
+    const deadline = new Date(t.deadline);
+
+    let status = "";
+
+    if (t.completed) {
+      status = "<span class='completed'>COMPLETED</span>";
+    } else if (now > deadline) {
+      status = "<span class='pending'>PENDING</span>";
+    }
+
+    div.innerHTML = `
+      <h4>${t.task}</h4>
+      <p><b>Target:</b> ${new Date(t.deadline).toLocaleString()}</p>
+      ${status}
+
+      <div class="actions">
+        <button onclick="completeTask('${t._id}')">✔ Complete</button>
+        <button onclick="deleteTask('${t._id}')">❌ Delete</button>
+      </div>
+    `;
+
+    tasks.appendChild(div);
+  });
+}
+
+// ADD TASK
+async function addTask() {
+  if (!task.value || !deadline.value) {
+    alert("Fill all fields");
+    return;
+  }
+
+  await fetch("http://localhost:5000/addTask", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token
+    },
+    body: JSON.stringify({
+      task: task.value,
+      deadline: deadline.value
+    })
+  });
+
+  task.value = "";
+  deadline.value = "";
+
+  loadTasks();
+}
+
+// COMPLETE TASK
+async function completeTask(id) {
+  await fetch(`http://localhost:5000/complete/${id}`, {
+    method: "PUT",
+    headers: { Authorization: token }
+  });
+
+  loadTasks();
+}
+
+// DELETE TASK
+async function deleteTask(id) {
+  await fetch(`http://localhost:5000/delete/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: token }
+  });
+
+  loadTasks();
+}
+
+// INITIAL LOAD
+loadTasks();
+</script>
+
+</body>
+</html>

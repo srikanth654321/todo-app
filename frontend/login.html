@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Login</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI';
+}
+
+body {
+  height: 100vh;
+  background: linear-gradient(135deg, orange, #764ba2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Glass Card */
+.card {
+  width: 320px;
+  padding: 30px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  text-align: center;
+  color: white;
+}
+
+.card h2 {
+  margin-bottom: 20px;
+}
+
+/* Inputs */
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 8px;
+  outline: none;
+}
+
+/* Button */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #00c9a7;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background: #00b894;
+}
+
+/* Link */
+p {
+  margin-top: 15px;
+}
+
+a {
+  color: #ffd369;
+  text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>Login</h2>
+
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+
+  <button onclick="login()">Login</button>
+
+  <p>Don't have account? <a href="signup.html">Signup</a></p>
+</div>
+
+<script>
+async function login() {
+  const res = await fetch("http://localhost:5000/login", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      email:email.value,
+      password:password.value
+    })
+  });
+
+  const data = await res.json();
+
+  localStorage.setItem("token", data.token);
+
+  const payload = JSON.parse(atob(data.token.split('.')[1]));
+  localStorage.setItem("userId", payload.id);
+
+  window.location="dashboard.html";
+}
+</script>
+
+</body>
+</html>
